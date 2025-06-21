@@ -1,13 +1,25 @@
 # My Pixel World
 
-Real-time collaborative pixel art editor built with Next.js, Socket.IO, and TypeScript.
+Real-time collaborative pixel art editor built with Next.js, Socket.IO, TypeScript, and Redis.
 
 ## Project Structure
 
 This project is split into two parts:
 
 - **`client/`**: Next.js frontend application (deployed on Vercel)
-- **`server/`**: Node.js + Socket.IO backend (deployed on Render.com)
+- **`server/`**: Node.js + Socket.IO backend with Redis (deployed on Render.com)
+
+## Features
+
+- 🎨 Real-time collaborative pixel drawing
+- 🖌️ Multiple drawing tools (pen, eraser, hand)
+- 🎨 Color picker with custom colors
+- 🗺️ Large navigable canvas
+- 👥 Multi-user collaboration
+- 📱 Responsive design with loading screen
+- ⚡ TypeScript support
+- 🗄️ Redis persistence (no data loss on server restart)
+- 🚀 Optimized for production
 
 ## Quick Start
 
@@ -42,9 +54,13 @@ npm run dev
 3. Set build command: `cd server && npm install && npm run build`
 4. Set start command: `cd server && npm start`
 5. Add environment variables:
+
    - `NODE_ENV=production`
    - `CLIENT_URL=https://your-vercel-app.vercel.app`
    - `CORS_ORIGIN=https://your-vercel-app.vercel.app`
+   - `REDIS_URL=your-redis-url-from-render`
+
+6. Create a Redis instance on Render.com and connect it to your server
 
 #### Client (Vercel)
 
@@ -52,18 +68,7 @@ npm run dev
 2. Connect your repository to Vercel
 3. Set environment variables in Vercel dashboard:
    - `NEXT_PUBLIC_SERVER_URL`: Your Render.com server URL
-   - `NEXT_PUBLIC_APP_NAME`: Pixel Art Editor
-
-## Features
-
-- 🎨 Real-time collaborative pixel drawing
-- 🖌️ Multiple drawing tools (pen, eraser, hand)
-- 🎨 Color picker with custom colors
-- 🗺️ Large navigable canvas
-- 👥 Multi-user collaboration
-- 📱 Responsive design
-- ⚡ TypeScript support
-- 🚀 Optimized for production
+   - `NEXT_PUBLIC_APP_NAME`: My Pixel World
 
 ## Technologies
 
@@ -82,6 +87,7 @@ npm run dev
 - TypeScript
 - Socket.IO
 - Express.js
+- Redis
 - CORS
 
 ## Environment Variables
@@ -93,13 +99,14 @@ PORT=3001
 NODE_ENV=development
 CORS_ORIGIN=*
 CLIENT_URL=http://localhost:3000
+REDIS_URL=redis://localhost:6379
 ```
 
 ### Client (.env.local)
 
 ```
 NEXT_PUBLIC_SERVER_URL=http://localhost:3001
-NEXT_PUBLIC_APP_NAME=Pixel Art Editor
+NEXT_PUBLIC_APP_NAME=My Pixel World
 ```
 
 ## Contributing

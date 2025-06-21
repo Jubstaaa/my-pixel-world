@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import { createClient } from "redis";
-import { config } from "./config/env.js";
+import { config } from "./config/env";
 import {
   IOServer,
   HTTPServerType,
@@ -12,7 +12,7 @@ import {
   ClientToServerEvents,
   InterServerEvents,
   SocketData,
-} from "./types/socket.js";
+} from "./types/socket";
 
 const app = express();
 const server: HTTPServerType = createServer(app);
@@ -33,7 +33,6 @@ const io: IOServer = new Server(server, {
   },
 });
 
-// Redis client
 const redis = createClient({
   url: config.redisUrl,
 });
@@ -48,7 +47,6 @@ redis.on("connect", () => {
 
 const PIXEL_HISTORY_KEY = "pixel_history";
 
-// Load pixel history from Redis
 const loadPixelHistory = async (): Promise<DrawingData[]> => {
   try {
     const history = await redis.get(PIXEL_HISTORY_KEY);
@@ -59,7 +57,6 @@ const loadPixelHistory = async (): Promise<DrawingData[]> => {
   }
 };
 
-// Save pixel history to Redis
 const savePixelHistory = async (history: DrawingData[]): Promise<void> => {
   try {
     await redis.set(PIXEL_HISTORY_KEY, JSON.stringify(history));
@@ -70,25 +67,20 @@ const savePixelHistory = async (history: DrawingData[]): Promise<void> => {
 
 let pixelHistory: DrawingData[] = [];
 
-// Initialize server
 const initializeServer = async () => {
-  // Connect to Redis
   await redis.connect();
 
-  // Load pixel history
   pixelHistory = await loadPixelHistory();
   console.log(`Loaded ${pixelHistory.length} pixels from Redis`);
 
   io.on("connection", async (socket) => {
     console.log("User connected:", socket.id);
 
-    // Send current history to new user
     socket.emit("drawing-history", pixelHistory);
 
     socket.on("draw", async (data: DrawingData) => {
       pixelHistory.push(data);
 
-      // Save to Redis every 10 pixels to avoid too frequent writes
       if (pixelHistory.length % 10 === 0) {
         await savePixelHistory(pixelHistory);
       }
@@ -134,5 +126,4 @@ const initializeServer = async () => {
   });
 };
 
-// Start the server
 initializeServer().catch(console.error);

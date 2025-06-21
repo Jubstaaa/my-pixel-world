@@ -15,6 +15,7 @@ interface UseCanvasEventsProps {
   currentTool: Tool;
   color: string;
   pixelSize: number;
+  eraserSize: { width: number; height: number };
   isPanning: boolean;
   panOffset: Point;
   lastPanPoint: Point;
@@ -22,6 +23,7 @@ interface UseCanvasEventsProps {
   setPanOffset: (offset: Point | ((prev: Point) => Point)) => void;
   setLastPanPoint: (point: Point) => void;
   drawPixel: (x: number, y: number, color: string, emitEvent?: boolean) => void;
+  eraseArea: (x: number, y: number, emitEvent?: boolean) => void;
   drawGrid: () => void;
 }
 
@@ -33,6 +35,7 @@ export const useCanvasEvents = ({
   currentTool,
   color,
   pixelSize,
+  eraserSize,
   isPanning,
   panOffset,
   lastPanPoint,
@@ -40,6 +43,7 @@ export const useCanvasEvents = ({
   setPanOffset,
   setLastPanPoint,
   drawPixel,
+  eraseArea,
   drawGrid,
 }: UseCanvasEventsProps) => {
   const drawGridRef = useRef(drawGrid);
@@ -82,8 +86,11 @@ export const useCanvasEvents = ({
     } else {
       const { x, y } = getGridPosition(e, panOffset, pixelSize);
       if (isWithinCanvas(x, y, pixelSize)) {
-        const drawColor = currentTool === "eraser" ? "#ffffff" : color;
-        drawPixel(x, y, drawColor, true);
+        if (currentTool === "eraser") {
+          eraseArea(x, y, true);
+        } else {
+          drawPixel(x, y, color, true);
+        }
       }
     }
   };
@@ -105,8 +112,11 @@ export const useCanvasEvents = ({
     } else if (e.buttons === 1 && currentTool !== "hand") {
       const { x, y } = getGridPosition(e, panOffset, pixelSize);
       if (isWithinCanvas(x, y, pixelSize)) {
-        const drawColor = currentTool === "eraser" ? "#ffffff" : color;
-        drawPixel(x, y, drawColor, true);
+        if (currentTool === "eraser") {
+          eraseArea(x, y, true);
+        } else {
+          drawPixel(x, y, color, true);
+        }
       }
     }
 
@@ -123,21 +133,33 @@ export const useCanvasEvents = ({
 
     hoverContext.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    if (currentTool === "pen" || currentTool === "eraser") {
+    if (currentTool === "pen") {
       const x = gridX * pixelSize;
       const y = gridY * pixelSize;
 
-      if (currentTool === "pen") {
-        hoverContext.strokeStyle = color;
-        hoverContext.lineWidth = 2;
-        hoverContext.strokeRect(x + 1, y + 1, pixelSize - 2, pixelSize - 2);
-      } else {
-        hoverContext.fillStyle = "rgba(255, 255, 255, 0.8)";
-        hoverContext.fillRect(x, y, pixelSize, pixelSize);
-        hoverContext.strokeStyle = "#333";
-        hoverContext.lineWidth = 1;
-        hoverContext.strokeRect(x + 0.5, y + 0.5, pixelSize - 1, pixelSize - 1);
-      }
+      hoverContext.strokeStyle = color;
+      hoverContext.lineWidth = 2;
+      hoverContext.strokeRect(x + 1, y + 1, pixelSize - 2, pixelSize - 2);
+      lastHoveredPixel.current = { x: gridX, y: gridY };
+    } else if (currentTool === "eraser") {
+      const halfWidth = Math.floor(eraserSize.width / 2);
+      const halfHeight = Math.floor(eraserSize.height / 2);
+
+      const startX = (gridX - halfWidth) * pixelSize;
+      const startY = (gridY - halfHeight) * pixelSize;
+      const width = eraserSize.width * pixelSize;
+      const height = eraserSize.height * pixelSize;
+
+      hoverContext.fillStyle = "rgba(255, 255, 255, 0.8)";
+      hoverContext.fillRect(startX, startY, width, height);
+      hoverContext.strokeStyle = "#333";
+      hoverContext.lineWidth = 1;
+      hoverContext.strokeRect(
+        startX + 0.5,
+        startY + 0.5,
+        width - 1,
+        height - 1
+      );
       lastHoveredPixel.current = { x: gridX, y: gridY };
     }
   };
