@@ -1,14 +1,15 @@
 # Pixel Art Server
 
-Real-time collaborative pixel art server built with Node.js, TypeScript, and Socket.IO.
+Real-time collaborative pixel art server built with Node.js, TypeScript, Socket.IO, and Redis.
 
 ## Features
 
 - Real-time drawing synchronization
-- Canvas history management
+- Canvas history management with Redis persistence
 - TypeScript support
 - Environment configuration
 - Health check endpoints
+- No data loss on server restart
 
 ## Development
 
@@ -50,22 +51,27 @@ npm start
 - `NODE_ENV`: Environment (development/production)
 - `CORS_ORIGIN`: CORS origin (default: \*)
 - `CLIENT_URL`: Client application URL
+- `REDIS_URL`: Redis connection URL
 
 ## Deployment on Render.com
 
 1. Create a new Web Service on Render.com
 2. Connect your GitHub repository
-3. Set build command: `npm install && npm run build`
-4. Set start command: `npm start`
+3. Set build command: `cd server && npm install && npm run build`
+4. Set start command: `cd server && npm start`
 5. Add environment variables:
+
    - `NODE_ENV=production`
    - `CLIENT_URL=https://your-vercel-app.vercel.app`
    - `CORS_ORIGIN=https://your-vercel-app.vercel.app`
+   - `REDIS_URL=your-redis-url-from-render`
+
+6. Create a Redis instance on Render.com and connect it to your server
 
 ## API Endpoints
 
 - `GET /`: Server info
-- `GET /health`: Health check
+- `GET /health`: Health check with pixel count
 
 ## Socket.IO Events
 

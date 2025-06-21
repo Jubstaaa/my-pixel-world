@@ -19,6 +19,8 @@ export default function DrawingCanvas() {
     pixelSize,
     currentTool,
     setCurrentTool,
+    eraserSize,
+    setEraserSize,
     isPanning,
     setIsPanning,
     panOffset,
@@ -27,6 +29,7 @@ export default function DrawingCanvas() {
     setLastPanPoint,
     drawGrid,
     drawPixel,
+    eraseArea,
   } = useCanvas();
 
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } =
@@ -38,6 +41,7 @@ export default function DrawingCanvas() {
       currentTool,
       color,
       pixelSize,
+      eraserSize,
       isPanning,
       panOffset,
       lastPanPoint,
@@ -45,6 +49,7 @@ export default function DrawingCanvas() {
       setPanOffset,
       setLastPanPoint,
       drawPixel,
+      eraseArea,
       drawGrid,
     });
 
@@ -83,6 +88,8 @@ export default function DrawingCanvas() {
           setColor={setColor}
           currentTool={currentTool}
           setCurrentTool={setCurrentTool}
+          eraserSize={eraserSize}
+          setEraserSize={setEraserSize}
           isConnected={isConnected}
         />
       </div>

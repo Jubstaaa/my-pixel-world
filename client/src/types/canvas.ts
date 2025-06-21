@@ -15,3 +15,9 @@ export interface Point {
   x: number;
   y: number;
 }
+
+export interface EraserSize {
+  label: string;
+  width: number;
+  height: number;
+}

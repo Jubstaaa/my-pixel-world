@@ -1,12 +1,13 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { DrawingData } from "@/types/socket";
-import { Tool, Pixel, PanOffset, Point } from "@/types/canvas";
+import { Tool, Pixel, PanOffset, Point, EraserSize } from "@/types/canvas";
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   DEFAULT_PIXEL_SIZE,
   DEFAULT_COLOR,
   DEFAULT_TOOL,
+  DEFAULT_ERASER_SIZE,
 } from "@/constants/canvas";
 import { useSocket } from "./useSocket";
 
@@ -21,6 +22,7 @@ export const useCanvas = () => {
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [pixelSize] = useState(DEFAULT_PIXEL_SIZE);
   const [currentTool, setCurrentTool] = useState<Tool>(DEFAULT_TOOL);
+  const [eraserSize, setEraserSize] = useState<EraserSize>(DEFAULT_ERASER_SIZE);
   const [isPanning, setIsPanning] = useState(false);
   const [panOffset, setPanOffset] = useState<PanOffset>({ x: 0, y: 0 });
   const [lastPanPoint, setLastPanPoint] = useState<Point>({ x: 0, y: 0 });
@@ -64,6 +66,20 @@ export const useCanvas = () => {
       }
     },
     [pixelSize, socket]
+  );
+
+  const eraseArea = useCallback(
+    (centerX: number, centerY: number, emitEvent: boolean = true) => {
+      const halfWidth = Math.floor(eraserSize.width / 2);
+      const halfHeight = Math.floor(eraserSize.height / 2);
+
+      for (let x = centerX - halfWidth; x <= centerX + halfWidth; x++) {
+        for (let y = centerY - halfHeight; y <= centerY + halfHeight; y++) {
+          drawPixel(x, y, "#ffffff", emitEvent);
+        }
+      }
+    },
+    [eraserSize, drawPixel]
   );
 
   const processPendingPixels = useCallback(() => {
@@ -172,6 +188,8 @@ export const useCanvas = () => {
     pixelSize,
     currentTool,
     setCurrentTool,
+    eraserSize,
+    setEraserSize,
     isPanning,
     setIsPanning,
     panOffset,
@@ -180,5 +198,6 @@ export const useCanvas = () => {
     setLastPanPoint,
     drawGrid,
     drawPixel,
+    eraseArea,
   };
 };
