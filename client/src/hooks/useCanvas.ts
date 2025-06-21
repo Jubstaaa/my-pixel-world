@@ -1,13 +1,12 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { DrawingData } from "@/types/socket";
-import { Tool, Pixel, PanOffset, Point, EraserSize } from "@/types/canvas";
+import { Tool, Pixel, PanOffset, Point } from "@/types/canvas";
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   DEFAULT_PIXEL_SIZE,
   DEFAULT_COLOR,
   DEFAULT_TOOL,
-  DEFAULT_ERASER_SIZE,
 } from "@/constants/canvas";
 import { useSocket } from "./useSocket";
 import { isWithinCanvas } from "@/utils/canvas";
@@ -23,7 +22,6 @@ export const useCanvas = () => {
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [pixelSize] = useState(DEFAULT_PIXEL_SIZE);
   const [currentTool, setCurrentTool] = useState<Tool>(DEFAULT_TOOL);
-  const [eraserSize, setEraserSize] = useState<EraserSize>(DEFAULT_ERASER_SIZE);
   const [isPanning, setIsPanning] = useState(false);
   const [panOffset, setPanOffset] = useState<PanOffset>({ x: 0, y: 0 });
   const [lastPanPoint, setLastPanPoint] = useState<Point>({ x: 0, y: 0 });
@@ -31,34 +29,18 @@ export const useCanvas = () => {
   const { socket, isConnected, isConnecting } = useSocket();
 
   const drawPixel = useCallback(
-    (
-      gridX: number,
-      gridY: number,
-      color: string,
-      emitEvent: boolean = true
-    ) => {
-      if (!contextRef.current) {
-        pendingPixels.current.push({ x: gridX, y: gridY, color });
-        return;
-      }
+    (x: number, y: number, color: string, emitEvent: boolean = true) => {
+      if (!contextRef.current) return;
 
       const context = contextRef.current;
-      const x = gridX * pixelSize;
-      const y = gridY * pixelSize;
-
       context.fillStyle = color;
-      context.fillRect(x, y, pixelSize, pixelSize);
-
-      context.strokeStyle = "#e0e0e0";
-      context.lineWidth = 1;
-      context.strokeRect(x, y, pixelSize, pixelSize);
+      context.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
 
       if (emitEvent && socket) {
-        const pixelData: Pixel = { x: gridX, y: gridY, color: color };
         const drawingData: DrawingData = {
           type: "pixel",
-          path: JSON.stringify(pixelData),
-          color: color,
+          path: JSON.stringify({ x, y, color }),
+          color,
           brushSize: pixelSize,
           userId: socket.id!,
           timestamp: Date.now(),
@@ -69,36 +51,11 @@ export const useCanvas = () => {
     [pixelSize, socket]
   );
 
-  const eraseArea = useCallback(
-    (centerX: number, centerY: number, emitEvent: boolean = true) => {
-      const halfWidth = Math.floor(eraserSize.width / 2);
-      const halfHeight = Math.floor(eraserSize.height / 2);
-
-      const pixelsToErase: Pixel[] = [];
-
-      for (let x = centerX - halfWidth; x <= centerX + halfWidth; x++) {
-        for (let y = centerY - halfHeight; y <= centerY + halfHeight; y++) {
-          if (isWithinCanvas(x, y, pixelSize)) {
-            drawPixel(x, y, "#ffffff", false);
-            pixelsToErase.push({ x, y, color: "#ffffff" });
-          }
-        }
-      }
-
-      // Send all erased pixels as a single batch event
-      if (emitEvent && socket && pixelsToErase.length > 0) {
-        const drawingData: DrawingData = {
-          type: "erase_batch",
-          path: JSON.stringify(pixelsToErase),
-          color: "#ffffff",
-          brushSize: pixelSize,
-          userId: socket.id!,
-          timestamp: Date.now(),
-        };
-        socket.emit("draw", drawingData);
-      }
+  const erasePixel = useCallback(
+    (x: number, y: number, emitEvent: boolean = true) => {
+      drawPixel(x, y, "#ffffff", emitEvent);
     },
-    [eraserSize, drawPixel, pixelSize, socket]
+    [drawPixel]
   );
 
   const processPendingPixels = useCallback(() => {
@@ -159,16 +116,7 @@ export const useCanvas = () => {
     };
 
     const handleDraw = (data: DrawingData) => {
-      if (data.type === "erase_batch") {
-        try {
-          const pixelsToErase: Pixel[] = JSON.parse(data.path);
-          pixelsToErase.forEach((pixel) => {
-            drawPixel(pixel.x, pixel.y, pixel.color, false);
-          });
-        } catch (error) {
-          console.error("Error parsing erase batch:", error);
-        }
-      } else if (data.type === "pixel" && data.path) {
+      if (data.type === "pixel" && data.path) {
         const pixelData: Pixel = JSON.parse(data.path);
         drawPixel(pixelData.x, pixelData.y, pixelData.color, false);
       }
@@ -216,8 +164,6 @@ export const useCanvas = () => {
     pixelSize,
     currentTool,
     setCurrentTool,
-    eraserSize,
-    setEraserSize,
     isPanning,
     setIsPanning,
     panOffset,
@@ -226,6 +172,6 @@ export const useCanvas = () => {
     setLastPanPoint,
     drawGrid,
     drawPixel,
-    eraseArea,
+    erasePixel,
   };
 };
