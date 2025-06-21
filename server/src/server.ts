@@ -14,6 +14,12 @@ import {
   SocketData,
 } from "./types/socket";
 
+interface Pixel {
+  x: number;
+  y: number;
+  color: string;
+}
+
 const app = express();
 const server: HTTPServerType = createServer(app);
 
@@ -104,7 +110,27 @@ const initializeServer = async () => {
     socket.emit("drawing-history", limitedHistory);
 
     socket.on("draw", async (data: DrawingData) => {
-      pixelHistory.push(data);
+      if (data.type === "erase_batch") {
+        // Handle batch erase
+        try {
+          const pixelsToErase: Pixel[] = JSON.parse(data.path);
+          pixelsToErase.forEach((pixel) => {
+            pixelHistory.push({
+              type: "pixel",
+              path: JSON.stringify(pixel),
+              color: pixel.color,
+              brushSize: data.brushSize,
+              userId: data.userId,
+              timestamp: data.timestamp,
+            });
+          });
+        } catch (error) {
+          console.error("Error parsing erase batch:", error);
+        }
+      } else {
+        // Handle single pixel
+        pixelHistory.push(data);
+      }
 
       // Limit memory usage
       if (pixelHistory.length > MAX_PIXELS) {
