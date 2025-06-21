@@ -1,4 +1,4 @@
-# Pixel Art Client
+# My Pixel World Client
 
 Real-time collaborative pixel art editor built with Next.js, TypeScript, and Socket.IO.
 
@@ -10,6 +10,8 @@ Real-time collaborative pixel art editor built with Next.js, TypeScript, and Soc
 - Large navigable canvas
 - Material Design Icons
 - TypeScript support
+- Loading screen with connection status
+- Responsive design
 
 ## Development
 
@@ -34,7 +36,7 @@ npm run dev
 ## Environment Variables
 
 - `NEXT_PUBLIC_SERVER_URL`: Socket.IO server URL (default: http://localhost:3001)
-- `NEXT_PUBLIC_APP_NAME`: Application name (default: Pixel Art Editor)
+- `NEXT_PUBLIC_APP_NAME`: Application name (default: My Pixel World)
 
 ## Deployment on Vercel
 
@@ -42,7 +44,7 @@ npm run dev
 2. Connect your repository to Vercel
 3. Set environment variables in Vercel dashboard:
    - `NEXT_PUBLIC_SERVER_URL`: Your Render.com server URL
-   - `NEXT_PUBLIC_APP_NAME`: Pixel Art Editor
+   - `NEXT_PUBLIC_APP_NAME`: My Pixel World
 
 ## Project Structure
 

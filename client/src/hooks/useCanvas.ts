@@ -18,7 +18,6 @@ export const useCanvas = () => {
   const pendingPixels = useRef<Pixel[]>([]);
   const isInitialized = useRef(false);
 
-  const [isConnected, setIsConnected] = useState(false);
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [pixelSize] = useState(DEFAULT_PIXEL_SIZE);
   const [currentTool, setCurrentTool] = useState<Tool>(DEFAULT_TOOL);
@@ -26,7 +25,7 @@ export const useCanvas = () => {
   const [panOffset, setPanOffset] = useState<PanOffset>({ x: 0, y: 0 });
   const [lastPanPoint, setLastPanPoint] = useState<Point>({ x: 0, y: 0 });
 
-  const socket = useSocket();
+  const { socket, isConnected, isConnecting } = useSocket();
 
   const drawPixel = useCallback(
     (
@@ -118,12 +117,10 @@ export const useCanvas = () => {
 
     const handleConnect = () => {
       console.log("Connected to server");
-      setIsConnected(true);
     };
 
     const handleDisconnect = () => {
       console.log("Disconnected from server");
-      setIsConnected(false);
     };
 
     const handleDraw = (data: DrawingData) => {
@@ -169,6 +166,7 @@ export const useCanvas = () => {
     lastHoveredPixel,
     socketRef: { current: socket },
     isConnected,
+    isConnecting,
     color,
     setColor,
     pixelSize,

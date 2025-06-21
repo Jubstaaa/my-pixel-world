@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pixel Art Editor",
+  title: "My Pixel World",
   description: "Real-time collaborative pixel art editor",
 };
 
