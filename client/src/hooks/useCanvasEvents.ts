@@ -73,7 +73,7 @@ export const useCanvasEvents = ({
         drawGridRef.current();
       }
     }
-  }, []);
+  }, [canvasRef, hoverCanvasRef, contextRef]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (currentTool === "hand") {

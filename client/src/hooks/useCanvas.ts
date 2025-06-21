@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { Socket } from "socket.io-client";
 import { DrawingData } from "@/types/socket";
 import { Tool, Pixel, PanOffset, Point } from "@/types/canvas";
 import {
