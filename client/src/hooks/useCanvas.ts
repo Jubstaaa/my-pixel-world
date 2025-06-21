@@ -9,7 +9,6 @@ import {
   DEFAULT_TOOL,
 } from "@/constants/canvas";
 import { useSocket } from "./useSocket";
-import { isWithinCanvas } from "@/utils/canvas";
 
 export const useCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
