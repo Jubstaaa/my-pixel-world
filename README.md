@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# My Pixel World
 
-## Getting Started
+Real-time collaborative pixel art editor built with Next.js, Socket.IO, and TypeScript.
 
-First, run the development server:
+## Project Structure
+
+This project is split into two parts:
+
+- **`client/`**: Next.js frontend application (deployed on Vercel)
+- **`server/`**: Node.js + Socket.IO backend (deployed on Render.com)
+
+## Quick Start
+
+### Development
+
+1. **Start the server:**
 
 ```bash
+cd server
+npm install
+cp env.example .env
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Start the client:**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd client
+npm install
+cp env.local.example .env.local
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Learn More
+### Production Deployment
 
-To learn more about Next.js, take a look at the following resources:
+#### Server (Render.com)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Create a new Web Service on Render.com
+2. Connect your GitHub repository
+3. Set build command: `cd server && npm install && npm run build`
+4. Set start command: `cd server && npm start`
+5. Add environment variables:
+   - `NODE_ENV=production`
+   - `CLIENT_URL=https://your-vercel-app.vercel.app`
+   - `CORS_ORIGIN=https://your-vercel-app.vercel.app`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+#### Client (Vercel)
 
-## Deploy on Vercel
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Set environment variables in Vercel dashboard:
+   - `NEXT_PUBLIC_SERVER_URL`: Your Render.com server URL
+   - `NEXT_PUBLIC_APP_NAME`: Pixel Art Editor
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 🎨 Real-time collaborative pixel drawing
+- 🖌️ Multiple drawing tools (pen, eraser, hand)
+- 🎨 Color picker with custom colors
+- 🗺️ Large navigable canvas
+- 👥 Multi-user collaboration
+- 📱 Responsive design
+- ⚡ TypeScript support
+- 🚀 Optimized for production
+
+## Technologies
+
+### Frontend
+
+- Next.js 14 (App Router)
+- TypeScript
+- Socket.IO Client
+- HTML5 Canvas
+- Material Design Icons
+- Tailwind CSS
+
+### Backend
+
+- Node.js
+- TypeScript
+- Socket.IO
+- Express.js
+- CORS
+
+## Environment Variables
+
+### Server (.env)
+
+```
+PORT=3001
+NODE_ENV=development
+CORS_ORIGIN=*
+CLIENT_URL=http://localhost:3000
+```
+
+### Client (.env.local)
+
+```
+NEXT_PUBLIC_SERVER_URL=http://localhost:3001
+NEXT_PUBLIC_APP_NAME=Pixel Art Editor
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test locally
+5. Submit a pull request
+
+## License
+
+MIT License

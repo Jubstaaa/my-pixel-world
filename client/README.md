@@ -1,0 +1,75 @@
+# Pixel Art Client
+
+Real-time collaborative pixel art editor built with Next.js, TypeScript, and Socket.IO.
+
+## Features
+
+- Real-time collaborative drawing
+- Multiple drawing tools (pen, eraser, hand)
+- Color picker
+- Large navigable canvas
+- Material Design Icons
+- TypeScript support
+
+## Development
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy environment file:
+
+```bash
+cp env.local.example .env.local
+```
+
+3. Start development server:
+
+```bash
+npm run dev
+```
+
+## Environment Variables
+
+- `NEXT_PUBLIC_SERVER_URL`: Socket.IO server URL (default: http://localhost:3001)
+- `NEXT_PUBLIC_APP_NAME`: Application name (default: Pixel Art Editor)
+
+## Deployment on Vercel
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Set environment variables in Vercel dashboard:
+   - `NEXT_PUBLIC_SERVER_URL`: Your Render.com server URL
+   - `NEXT_PUBLIC_APP_NAME`: Pixel Art Editor
+
+## Project Structure
+
+```
+src/
+├── app/                 # Next.js app directory
+├── components/          # React components
+├── hooks/              # Custom React hooks
+├── types/              # TypeScript type definitions
+├── constants/          # Application constants
+├── utils/              # Utility functions
+└── config/             # Configuration files
+```
+
+## Tools
+
+- **Pen Tool**: Draw pixels on the canvas
+- **Eraser Tool**: Remove pixels from the canvas
+- **Hand Tool**: Navigate around the canvas
+- **Color Picker**: Select drawing colors
+- **Clear Canvas**: Clear all pixels
+
+## Technologies
+
+- Next.js 14 (App Router)
+- TypeScript
+- Socket.IO Client
+- HTML5 Canvas
+- Material Design Icons
+- Tailwind CSS
