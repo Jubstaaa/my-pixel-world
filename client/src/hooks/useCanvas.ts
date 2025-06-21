@@ -10,6 +10,7 @@ import {
   DEFAULT_ERASER_SIZE,
 } from "@/constants/canvas";
 import { useSocket } from "./useSocket";
+import { isWithinCanvas } from "@/utils/canvas";
 
 export const useCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -73,13 +74,31 @@ export const useCanvas = () => {
       const halfWidth = Math.floor(eraserSize.width / 2);
       const halfHeight = Math.floor(eraserSize.height / 2);
 
+      const pixelsToErase: Pixel[] = [];
+
       for (let x = centerX - halfWidth; x <= centerX + halfWidth; x++) {
         for (let y = centerY - halfHeight; y <= centerY + halfHeight; y++) {
-          drawPixel(x, y, "#ffffff", emitEvent);
+          if (isWithinCanvas(x, y, pixelSize)) {
+            drawPixel(x, y, "#ffffff", false);
+            pixelsToErase.push({ x, y, color: "#ffffff" });
+          }
         }
       }
+
+      // Send all erased pixels as a single batch event
+      if (emitEvent && socket && pixelsToErase.length > 0) {
+        const drawingData: DrawingData = {
+          type: "erase_batch",
+          path: JSON.stringify(pixelsToErase),
+          color: "#ffffff",
+          brushSize: pixelSize,
+          userId: socket.id!,
+          timestamp: Date.now(),
+        };
+        socket.emit("draw", drawingData);
+      }
     },
-    [eraserSize, drawPixel]
+    [eraserSize, drawPixel, pixelSize, socket]
   );
 
   const processPendingPixels = useCallback(() => {
@@ -140,7 +159,16 @@ export const useCanvas = () => {
     };
 
     const handleDraw = (data: DrawingData) => {
-      if (data.type === "pixel" && data.path) {
+      if (data.type === "erase_batch") {
+        try {
+          const pixelsToErase: Pixel[] = JSON.parse(data.path);
+          pixelsToErase.forEach((pixel) => {
+            drawPixel(pixel.x, pixel.y, pixel.color, false);
+          });
+        } catch (error) {
+          console.error("Error parsing erase batch:", error);
+        }
+      } else if (data.type === "pixel" && data.path) {
         const pixelData: Pixel = JSON.parse(data.path);
         drawPixel(pixelData.x, pixelData.y, pixelData.color, false);
       }
