@@ -46,11 +46,22 @@ redis.on("connect", () => {
 });
 
 const PIXEL_HISTORY_KEY = "pixel_history";
+const MAX_PIXELS = 10000; // Limit pixel history to prevent memory issues
 
 const loadPixelHistory = async (): Promise<DrawingData[]> => {
   try {
     const history = await redis.get(PIXEL_HISTORY_KEY);
-    return history ? JSON.parse(history) : [];
+    const pixels = history ? JSON.parse(history) : [];
+
+    // Limit the number of pixels loaded into memory
+    if (pixels.length > MAX_PIXELS) {
+      console.log(
+        `Limiting pixel history from ${pixels.length} to ${MAX_PIXELS} pixels`
+      );
+      return pixels.slice(-MAX_PIXELS);
+    }
+
+    return pixels;
   } catch (error) {
     console.error("Error loading pixel history:", error);
     return [];
@@ -59,7 +70,11 @@ const loadPixelHistory = async (): Promise<DrawingData[]> => {
 
 const savePixelHistory = async (history: DrawingData[]): Promise<void> => {
   try {
-    await redis.set(PIXEL_HISTORY_KEY, JSON.stringify(history));
+    // Limit the number of pixels saved to Redis
+    const limitedHistory =
+      history.length > MAX_PIXELS ? history.slice(-MAX_PIXELS) : history;
+
+    await redis.set(PIXEL_HISTORY_KEY, JSON.stringify(limitedHistory));
   } catch (error) {
     console.error("Error saving pixel history:", error);
   }
@@ -73,16 +88,37 @@ const initializeServer = async () => {
   pixelHistory = await loadPixelHistory();
   console.log(`Loaded ${pixelHistory.length} pixels from Redis`);
 
+  // Force garbage collection if available
+  if (global.gc) {
+    global.gc();
+  }
+
   io.on("connection", async (socket) => {
     console.log("User connected:", socket.id);
 
-    socket.emit("drawing-history", pixelHistory);
+    // Send limited history to new users
+    const limitedHistory =
+      pixelHistory.length > MAX_PIXELS
+        ? pixelHistory.slice(-MAX_PIXELS)
+        : pixelHistory;
+    socket.emit("drawing-history", limitedHistory);
 
     socket.on("draw", async (data: DrawingData) => {
       pixelHistory.push(data);
 
-      if (pixelHistory.length % 10 === 0) {
+      // Limit memory usage
+      if (pixelHistory.length > MAX_PIXELS) {
+        pixelHistory = pixelHistory.slice(-MAX_PIXELS);
+      }
+
+      // Save to Redis every 50 pixels instead of 10
+      if (pixelHistory.length % 50 === 0) {
         await savePixelHistory(pixelHistory);
+
+        // Force garbage collection
+        if (global.gc) {
+          global.gc();
+        }
       }
 
       socket.broadcast.emit("draw", data);
@@ -105,6 +141,7 @@ const initializeServer = async () => {
       environment: config.nodeEnv,
       clientUrl: config.clientUrl,
       pixelCount: pixelHistory.length,
+      maxPixels: MAX_PIXELS,
     });
   });
 
@@ -114,6 +151,8 @@ const initializeServer = async () => {
       timestamp: new Date().toISOString(),
       connections: io.engine.clientsCount,
       pixelCount: pixelHistory.length,
+      maxPixels: MAX_PIXELS,
+      memoryUsage: process.memoryUsage(),
     });
   });
 
@@ -123,6 +162,7 @@ const initializeServer = async () => {
     console.log(`🌍 Environment: ${config.nodeEnv}`);
     console.log(`🔗 Client URL: ${config.clientUrl}`);
     console.log(`📊 Redis connected: ${redis.isReady}`);
+    console.log(`💾 Max pixels in memory: ${MAX_PIXELS}`);
   });
 };
 
