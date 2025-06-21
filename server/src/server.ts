@@ -110,19 +110,27 @@ const initializeServer = async () => {
     socket.emit("drawing-history", limitedHistory);
 
     socket.on("draw", async (data: DrawingData) => {
-      // Handle single pixel
-      pixelHistory.push(data);
+      if (data.type === "erase") {
+        const eraseData: { x: number; y: number } = JSON.parse(data.path);
 
-      // Limit memory usage
+        pixelHistory = pixelHistory.filter((pixelData) => {
+          if (pixelData.type === "pixel" && pixelData.path) {
+            const pixel: Pixel = JSON.parse(pixelData.path);
+            return !(pixel.x === eraseData.x && pixel.y === eraseData.y);
+          }
+          return true;
+        });
+      } else {
+        pixelHistory.push(data);
+      }
+
       if (pixelHistory.length > MAX_PIXELS) {
         pixelHistory = pixelHistory.slice(-MAX_PIXELS);
       }
 
-      // Save to Redis every 50 pixels instead of 10
       if (pixelHistory.length % 50 === 0) {
         await savePixelHistory(pixelHistory);
 
-        // Force garbage collection
         if (global.gc) {
           global.gc();
         }

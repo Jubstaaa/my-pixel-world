@@ -50,11 +50,47 @@ export const useCanvas = () => {
     [pixelSize, socket]
   );
 
+  const erasePixelFromData = useCallback(
+    (x: number, y: number, emitEvent: boolean = true) => {
+      if (!contextRef.current) return;
+
+      const context = contextRef.current;
+      context.fillStyle = "#ffffff";
+      context.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+
+      context.strokeStyle = "#e0e0e0";
+      context.lineWidth = 1;
+
+      context.beginPath();
+      context.moveTo(x * pixelSize, y * pixelSize);
+      context.lineTo(x * pixelSize, (y + 1) * pixelSize);
+      context.stroke();
+
+      context.beginPath();
+      context.moveTo(x * pixelSize, y * pixelSize);
+      context.lineTo((x + 1) * pixelSize, y * pixelSize);
+      context.stroke();
+
+      if (emitEvent && socket) {
+        const drawingData: DrawingData = {
+          type: "erase",
+          path: JSON.stringify({ x, y }),
+          color: "#ffffff",
+          brushSize: pixelSize,
+          userId: socket.id!,
+          timestamp: Date.now(),
+        };
+        socket.emit("draw", drawingData);
+      }
+    },
+    [pixelSize, socket]
+  );
+
   const erasePixel = useCallback(
     (x: number, y: number, emitEvent: boolean = true) => {
-      drawPixel(x, y, "#ffffff", emitEvent);
+      erasePixelFromData(x, y, emitEvent);
     },
-    [drawPixel]
+    [erasePixelFromData]
   );
 
   const processPendingPixels = useCallback(() => {
@@ -118,6 +154,9 @@ export const useCanvas = () => {
       if (data.type === "pixel" && data.path) {
         const pixelData: Pixel = JSON.parse(data.path);
         drawPixel(pixelData.x, pixelData.y, pixelData.color, false);
+      } else if (data.type === "erase" && data.path) {
+        const eraseData: { x: number; y: number } = JSON.parse(data.path);
+        erasePixelFromData(eraseData.x, eraseData.y, false);
       }
     };
 
@@ -127,6 +166,9 @@ export const useCanvas = () => {
         if (data.type === "pixel" && data.path) {
           const pixelData: Pixel = JSON.parse(data.path);
           drawPixel(pixelData.x, pixelData.y, pixelData.color, false);
+        } else if (data.type === "erase" && data.path) {
+          const eraseData: { x: number; y: number } = JSON.parse(data.path);
+          erasePixelFromData(eraseData.x, eraseData.y, false);
         }
       });
     };
@@ -172,5 +214,6 @@ export const useCanvas = () => {
     drawGrid,
     drawPixel,
     erasePixel,
+    erasePixelFromData,
   };
 };
