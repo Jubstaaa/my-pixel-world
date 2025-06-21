@@ -3,6 +3,7 @@
 import { useCanvas } from "@/hooks/useCanvas";
 import { useCanvasEvents } from "@/hooks/useCanvasEvents";
 import { Toolbar } from "@/components/Toolbar";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { getToolCursor } from "@/utils/canvas";
 
 export default function DrawingCanvas() {
@@ -12,6 +13,7 @@ export default function DrawingCanvas() {
     contextRef,
     lastHoveredPixel,
     isConnected,
+    isConnecting,
     color,
     setColor,
     pixelSize,
@@ -47,39 +49,43 @@ export default function DrawingCanvas() {
     });
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden">
-      <div
-        className="absolute"
-        style={{
-          transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
-          cursor: getToolCursor(currentTool),
-        }}
-        onMouseLeave={handleMouseLeave}
-      >
-        <canvas
-          ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          className="block"
+    <>
+      <LoadingScreen isConnected={isConnected} isConnecting={isConnecting} />
+
+      <div className="relative w-screen h-screen overflow-hidden">
+        <div
+          className="absolute"
           style={{
-            backgroundColor: "#ffffff",
-            touchAction: "none",
+            transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
+            cursor: getToolCursor(currentTool),
           }}
-        />
-        <canvas
-          ref={hoverCanvasRef}
-          className="absolute top-0 left-0 pointer-events-none"
+          onMouseLeave={handleMouseLeave}
+        >
+          <canvas
+            ref={canvasRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            className="block"
+            style={{
+              backgroundColor: "#ffffff",
+              touchAction: "none",
+            }}
+          />
+          <canvas
+            ref={hoverCanvasRef}
+            className="absolute top-0 left-0 pointer-events-none"
+          />
+        </div>
+
+        <Toolbar
+          color={color}
+          setColor={setColor}
+          currentTool={currentTool}
+          setCurrentTool={setCurrentTool}
+          isConnected={isConnected}
         />
       </div>
-
-      <Toolbar
-        color={color}
-        setColor={setColor}
-        currentTool={currentTool}
-        setCurrentTool={setCurrentTool}
-        isConnected={isConnected}
-      />
-    </div>
+    </>
   );
 }
