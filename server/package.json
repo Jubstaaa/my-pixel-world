@@ -2,13 +2,12 @@
   "name": "pixel-art-server",
   "version": "1.0.0",
   "description": "Real-time collaborative pixel art server",
-  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "node --loader ts-node/esm src/server.ts",
-    "dev:watch": "nodemon --exec \"node --loader ts-node/esm\" src/server.ts"
+    "dev": "ts-node src/server.ts",
+    "dev:watch": "nodemon --exec ts-node src/server.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
