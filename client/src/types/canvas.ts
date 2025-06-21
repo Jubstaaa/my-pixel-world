@@ -11,4 +11,4 @@ export interface Point {
   y: number;
 }
 
-export interface PanOffset extends Point {}
+export type PanOffset = Point;
