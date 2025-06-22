@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Tool, Point } from "@/types/canvas";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/constants/canvas";
 import {
@@ -23,6 +23,10 @@ interface UseCanvasEventsProps {
   setLastPanPoint: (point: Point) => void;
   drawPixel: (x: number, y: number, color: string, emitEvent?: boolean) => void;
   erasePixel: (x: number, y: number, emitEvent?: boolean) => void;
+  drawBatchPixels: (
+    pixels: { x: number; y: number; color: string }[],
+    emitEvent?: boolean
+  ) => void;
   drawGrid: () => void;
 }
 
@@ -42,10 +46,65 @@ export const useCanvasEvents = ({
   setLastPanPoint,
   drawPixel,
   erasePixel,
+  drawBatchPixels,
   drawGrid,
 }: UseCanvasEventsProps) => {
   const drawGridRef = useRef(drawGrid);
   drawGridRef.current = drawGrid;
+
+  // Optimizasyon için refs
+  const isDrawing = useRef(false);
+  const lastDrawTime = useRef(0);
+  const drawPath = useRef<Point[]>([]);
+  const throttleDelay = 16; // ~60fps
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const pendingPixels = useRef<Point[]>([]);
+
+  // Debounced batch send
+  const debouncedSendBatch = useCallback(() => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      if (pendingPixels.current.length > 0) {
+        const pixels = pendingPixels.current.map((point) => ({
+          x: point.x,
+          y: point.y,
+          color: color,
+        }));
+
+        drawBatchPixels(pixels, true);
+        pendingPixels.current = [];
+      }
+    }, 100); // 100ms debounce
+  }, [color, drawBatchPixels]);
+
+  // Throttled draw function
+  const throttledDraw = useCallback(
+    (x: number, y: number, shouldEmit: boolean = false) => {
+      const now = Date.now();
+
+      if (shouldEmit || now - lastDrawTime.current >= throttleDelay) {
+        if (currentTool === "eraser") {
+          erasePixel(x, y, shouldEmit);
+        } else {
+          drawPixel(x, y, color, shouldEmit);
+        }
+
+        if (shouldEmit) {
+          drawPath.current.push({ x, y });
+        } else {
+          // Mouse hareketi sırasında pending'e ekle
+          pendingPixels.current.push({ x, y });
+          debouncedSendBatch();
+        }
+
+        lastDrawTime.current = now;
+      }
+    },
+    [currentTool, color, drawPixel, erasePixel, debouncedSendBatch]
+  );
 
   useEffect(() => {
     const hoverContext = hoverCanvasRef.current?.getContext("2d");
@@ -75,6 +134,13 @@ export const useCanvasEvents = ({
         drawGridRef.current();
       }
     }
+
+    // Cleanup function
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
   }, [canvasRef, hoverCanvasRef, contextRef]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -82,13 +148,18 @@ export const useCanvasEvents = ({
       setIsPanning(true);
       setLastPanPoint({ x: e.clientX, y: e.clientY });
     } else {
+      isDrawing.current = true;
+      drawPath.current = [];
+
       const { x, y } = getGridPosition(e, panOffset, pixelSize);
       if (isWithinCanvas(x, y, pixelSize)) {
+        // İlk tıklamada hemen çiz ve socket mesajı gönder
         if (currentTool === "eraser") {
           erasePixel(x, y, true);
         } else {
           drawPixel(x, y, color, true);
         }
+        drawPath.current.push({ x, y });
       }
     }
   };
@@ -107,14 +178,11 @@ export const useCanvasEvents = ({
       });
 
       setLastPanPoint({ x: e.clientX, y: e.clientY });
-    } else if (e.buttons === 1 && currentTool !== "hand") {
+    } else if (e.buttons === 1 && currentTool !== "hand" && isDrawing.current) {
       const { x, y } = getGridPosition(e, panOffset, pixelSize);
       if (isWithinCanvas(x, y, pixelSize)) {
-        if (currentTool === "eraser") {
-          erasePixel(x, y, true);
-        } else {
-          drawPixel(x, y, color, true);
-        }
+        // Mouse hareketi sırasında throttled çizim (socket mesajı gönderme)
+        throttledDraw(x, y, false);
       }
     }
 
@@ -153,10 +221,22 @@ export const useCanvasEvents = ({
   };
 
   const handleMouseUp = () => {
+    if (isDrawing.current && currentTool !== "hand") {
+      // Çizim bittiğinde batch mesajı gönder
+      debouncedSendBatch();
+    }
+
+    isDrawing.current = false;
     setIsPanning(false);
   };
 
   const handleMouseLeave = () => {
+    if (isDrawing.current && currentTool !== "hand") {
+      // Mouse canvas'tan çıktığında da batch mesajı gönder
+      debouncedSendBatch();
+    }
+
+    isDrawing.current = false;
     setIsPanning(false);
     const hoverContext = hoverCanvasRef.current?.getContext("2d");
     if (hoverContext) {

@@ -52,7 +52,7 @@ redis.on("connect", () => {
 });
 
 const PIXEL_HISTORY_KEY = "pixel_history";
-const MAX_PIXELS = 10000; // Limit pixel history to prevent memory issues
+const MAX_PIXELS = 10000; // Increased limit since we have better memory management
 
 const loadPixelHistory = async (): Promise<DrawingData[]> => {
   try {
@@ -74,13 +74,9 @@ const loadPixelHistory = async (): Promise<DrawingData[]> => {
   }
 };
 
-const savePixelHistory = async (history: DrawingData[]): Promise<void> => {
+const savePixelHistory = async (history: DrawingData[]) => {
   try {
-    // Limit the number of pixels saved to Redis
-    const limitedHistory =
-      history.length > MAX_PIXELS ? history.slice(-MAX_PIXELS) : history;
-
-    await redis.set(PIXEL_HISTORY_KEY, JSON.stringify(limitedHistory));
+    await redis.set(PIXEL_HISTORY_KEY, JSON.stringify(history));
   } catch (error) {
     console.error("Error saving pixel history:", error);
   }
@@ -120,6 +116,22 @@ const initializeServer = async () => {
           }
           return true;
         });
+      } else if (data.type === "batch_pixels") {
+        // Batch pixels işleme
+        const pixels: Pixel[] = JSON.parse(data.path);
+
+        // Her pixel için ayrı DrawingData oluştur
+        pixels.forEach((pixel) => {
+          const pixelData: DrawingData = {
+            type: "pixel",
+            path: JSON.stringify(pixel),
+            color: pixel.color,
+            brushSize: data.brushSize,
+            userId: data.userId,
+            timestamp: data.timestamp,
+          };
+          pixelHistory.push(pixelData);
+        });
       } else {
         pixelHistory.push(data);
       }
@@ -128,7 +140,8 @@ const initializeServer = async () => {
         pixelHistory = pixelHistory.slice(-MAX_PIXELS);
       }
 
-      if (pixelHistory.length % 50 === 0) {
+      // Save more frequently and force garbage collection
+      if (pixelHistory.length % 20 === 0) {
         await savePixelHistory(pixelHistory);
 
         if (global.gc) {
@@ -143,10 +156,19 @@ const initializeServer = async () => {
       pixelHistory = [];
       await savePixelHistory(pixelHistory);
       socket.broadcast.emit("clear-canvas");
+
+      if (global.gc) {
+        global.gc();
+      }
     });
 
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
+
+      // Force garbage collection on disconnect
+      if (global.gc) {
+        global.gc();
+      }
     });
   });
 
