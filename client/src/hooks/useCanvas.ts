@@ -81,6 +81,47 @@ export const useCanvas = () => {
     [pixelSize, socket]
   );
 
+  const eraseBatchPixels = useCallback(
+    (pixels: { x: number; y: number }[], emitEvent: boolean = true) => {
+      if (!contextRef.current) return;
+
+      const context = contextRef.current;
+
+      // Batch erase from canvas
+      pixels.forEach(({ x, y }) => {
+        context.fillStyle = "#ffffff";
+        context.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+
+        context.strokeStyle = "#e0e0e0";
+        context.lineWidth = 1;
+
+        context.beginPath();
+        context.moveTo(x * pixelSize, y * pixelSize);
+        context.lineTo(x * pixelSize, (y + 1) * pixelSize);
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(x * pixelSize, y * pixelSize);
+        context.lineTo((x + 1) * pixelSize, y * pixelSize);
+        context.stroke();
+      });
+
+      // Send batch erase event
+      if (emitEvent && socket && pixels.length > 0) {
+        const drawingData: DrawingData = {
+          type: "batch_erase",
+          path: JSON.stringify(pixels),
+          color: "#ffffff",
+          brushSize: pixelSize,
+          userId: socket.id!,
+          timestamp: Date.now(),
+        };
+        socket.emit("draw", drawingData);
+      }
+    },
+    [pixelSize, socket]
+  );
+
   const erasePixelFromData = useCallback(
     (x: number, y: number, emitEvent: boolean = true) => {
       if (!contextRef.current) return;
@@ -190,6 +231,9 @@ export const useCanvas = () => {
           data.path
         );
         drawBatchPixels(pixels, false);
+      } else if (data.type === "batch_erase" && data.path) {
+        const erasePixels: { x: number; y: number }[] = JSON.parse(data.path);
+        eraseBatchPixels(erasePixels, false);
       } else if (data.type === "erase" && data.path) {
         const eraseData: { x: number; y: number } = JSON.parse(data.path);
         erasePixelFromData(eraseData.x, eraseData.y, false);
@@ -252,5 +296,6 @@ export const useCanvas = () => {
     erasePixel,
     erasePixelFromData,
     drawBatchPixels,
+    eraseBatchPixels,
   };
 };

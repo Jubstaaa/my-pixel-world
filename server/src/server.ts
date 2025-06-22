@@ -132,6 +132,20 @@ const initializeServer = async () => {
           };
           pixelHistory.push(pixelData);
         });
+      } else if (data.type === "batch_erase") {
+        // Batch erase işleme
+        const erasePixels: { x: number; y: number }[] = JSON.parse(data.path);
+
+        // Her erase için history'den kaldır
+        erasePixels.forEach((erasePixel) => {
+          pixelHistory = pixelHistory.filter((pixelData) => {
+            if (pixelData.type === "pixel" && pixelData.path) {
+              const pixel: Pixel = JSON.parse(pixelData.path);
+              return !(pixel.x === erasePixel.x && pixel.y === erasePixel.y);
+            }
+            return true;
+          });
+        });
       } else {
         pixelHistory.push(data);
       }
