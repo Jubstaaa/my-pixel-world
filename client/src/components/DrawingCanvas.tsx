@@ -28,6 +28,7 @@ export default function DrawingCanvas() {
     drawGrid,
     drawPixel,
     erasePixel,
+    drawBatchPixels,
   } = useCanvas();
 
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } =
@@ -47,6 +48,7 @@ export default function DrawingCanvas() {
       setLastPanPoint,
       drawPixel,
       erasePixel,
+      drawBatchPixels,
       drawGrid,
     });
 
