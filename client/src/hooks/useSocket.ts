@@ -6,6 +6,7 @@ export const useSocket = () => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [userCount, setUserCount] = useState(1);
 
   useEffect(() => {
     if (!socketRef.current) {
@@ -50,5 +51,14 @@ export const useSocket = () => {
     }
   }, []);
 
-  return { socket: socketRef.current, isConnected, isConnecting };
+  useEffect(() => {
+    if (!socketRef.current) return;
+    const handleUserCount = (count: number) => setUserCount(count);
+    socketRef.current.on("user-count", handleUserCount);
+    return () => {
+      socketRef.current?.off("user-count", handleUserCount);
+    };
+  }, []);
+
+  return { socket: socketRef.current, isConnected, isConnecting, userCount };
 };

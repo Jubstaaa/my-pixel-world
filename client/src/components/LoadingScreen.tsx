@@ -16,7 +16,7 @@ export const LoadingScreen = ({
           My Pixel World
         </h2>
         <p className="text-gray-600">
-          {isConnecting ? "Connecting..." : "Loading..."}
+          {isConnecting ? "Waking up server, please wait..." : "Loading..."}
         </p>
         <div className="mt-4 flex justify-center space-x-2">
           <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>

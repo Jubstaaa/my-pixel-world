@@ -2,12 +2,8 @@ import { Server as SocketIOServer } from "socket.io";
 import { Server as HTTPServer } from "http";
 
 export interface DrawingData {
-  type: string;
   path: string;
   color: string;
-  brushSize: number;
-  userId: string;
-  timestamp: number;
 }
 
 export interface Pixel {
@@ -20,6 +16,7 @@ export interface ServerToClientEvents {
   "drawing-history": (history: DrawingData[]) => void;
   draw: (data: DrawingData) => void;
   "clear-canvas": () => void;
+  "user-count": (count: number) => void;
 }
 
 export interface ClientToServerEvents {
