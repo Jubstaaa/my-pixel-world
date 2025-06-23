@@ -33,18 +33,20 @@ export const useCanvas = (socket: Socket | null) => {
       if (!contextRef.current) return;
       const context = contextRef.current;
       pixels.forEach(({ x, y, color }) => {
+        context.fillStyle = "#ffffff";
+        context.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
         context.fillStyle = color;
         context.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
       });
       if (emitEvent && socket && pixels.length > 0) {
         const drawingData: DrawingData = {
-          path: JSON.stringify(pixels),
-          color: pixels[0].color,
+          path: JSON.stringify(pixels.map(({ x, y }) => ({ x, y }))),
+          color: pixels[0].color || color,
         };
         socket.emit("draw", drawingData);
       }
     },
-    [pixelSize, socket]
+    [pixelSize, socket, color]
   );
 
   const erasePixels = useCallback(
@@ -118,10 +120,20 @@ export const useCanvas = (socket: Socket | null) => {
   const handleDraw = (data: DrawingData) => {
     if (!contextRef.current) return;
     if (data.path && data.color) {
-      const pixels: DrawPixel[] = JSON.parse(data.path);
-      drawPixels(pixels, false);
+      const pixels: { x: number; y: number; color?: string }[] = JSON.parse(
+        data.path
+      );
+      const context = contextRef.current;
+      pixels.forEach(({ x, y }) => {
+        context.fillStyle = "#ffffff";
+        context.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+      });
+      drawPixels(
+        pixels.map((p) => ({ x: p.x, y: p.y, color: data.color! })),
+        false
+      );
     } else if (data.path && !data.color) {
-      const erasePixelsArr: ErasePixel[] = JSON.parse(data.path);
+      const erasePixelsArr: { x: number; y: number }[] = JSON.parse(data.path);
       erasePixels(erasePixelsArr, false);
     }
   };
