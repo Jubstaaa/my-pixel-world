@@ -72,12 +72,18 @@ const initializeServer = async () => {
         });
       } else {
         pixels.forEach((pixel) => {
+          if (!pixel.color && !data.color) return;
+          pixelHistory = pixelHistory.filter((p) => {
+            const { x, y } = JSON.parse(p.path);
+            return !(x === pixel.x && y === pixel.y);
+          });
           pixelHistory.push({
-            path: JSON.stringify(pixel),
-            color: pixel.color!,
+            path: JSON.stringify({ x: pixel.x, y: pixel.y }),
+            color: pixel.color || data.color,
           });
         });
       }
+      console.log(pixelHistory.slice(-20));
       socket.broadcast.emit("draw", data);
     });
 
