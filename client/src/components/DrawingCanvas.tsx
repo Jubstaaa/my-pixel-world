@@ -5,15 +5,15 @@ import { useCanvasEvents } from "@/hooks/useCanvasEvents";
 import { Toolbar } from "@/components/Toolbar";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { getToolCursor } from "@/utils/canvas";
+import { useSocket } from "@/hooks/useSocket";
 
 export default function DrawingCanvas() {
+  const { socket, userCount, isConnected, isConnecting } = useSocket();
   const {
     canvasRef,
     hoverCanvasRef,
     contextRef,
     lastHoveredPixel,
-    isConnected,
-    isConnecting,
     color,
     setColor,
     pixelSize,
@@ -26,11 +26,9 @@ export default function DrawingCanvas() {
     lastPanPoint,
     setLastPanPoint,
     drawGrid,
-    drawPixel,
-    erasePixel,
-    drawBatchPixels,
-    eraseBatchPixels,
-  } = useCanvas();
+    drawPixels,
+    erasePixels,
+  } = useCanvas(socket);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } =
     useCanvasEvents({
@@ -47,10 +45,8 @@ export default function DrawingCanvas() {
       setIsPanning,
       setPanOffset,
       setLastPanPoint,
-      drawPixel,
-      erasePixel,
-      drawBatchPixels,
-      eraseBatchPixels,
+      drawPixels,
+      erasePixels,
       drawGrid,
     });
 
@@ -92,6 +88,12 @@ export default function DrawingCanvas() {
           isConnected={isConnected}
         />
       </div>
+
+      {isConnected && (
+        <div className="fixed top-2 right-4 z-50 bg-white/80 px-3 py-1 rounded shadow text-sm font-medium">
+          {userCount} online
+        </div>
+      )}
     </>
   );
 }

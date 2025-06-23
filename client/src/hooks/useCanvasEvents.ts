@@ -21,13 +21,11 @@ interface UseCanvasEventsProps {
   setIsPanning: (panning: boolean) => void;
   setPanOffset: (offset: Point | ((prev: Point) => Point)) => void;
   setLastPanPoint: (point: Point) => void;
-  drawPixel: (x: number, y: number, color: string, emitEvent?: boolean) => void;
-  erasePixel: (x: number, y: number, emitEvent?: boolean) => void;
-  drawBatchPixels: (
+  drawPixels: (
     pixels: { x: number; y: number; color: string }[],
     emitEvent?: boolean
   ) => void;
-  eraseBatchPixels: (
+  erasePixels: (
     pixels: { x: number; y: number }[],
     emitEvent?: boolean
   ) => void;
@@ -48,10 +46,8 @@ export const useCanvasEvents = ({
   setIsPanning,
   setPanOffset,
   setLastPanPoint,
-  drawPixel,
-  erasePixel,
-  drawBatchPixels,
-  eraseBatchPixels,
+  drawPixels,
+  erasePixels,
   drawGrid,
 }: UseCanvasEventsProps) => {
   const drawGridRef = useRef(drawGrid);
@@ -64,15 +60,14 @@ export const useCanvasEvents = ({
   const throttleDelay = 16; // ~60fps
   const drawDebounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const eraseDebounceTimeout = useRef<NodeJS.Timeout | null>(null);
-  const pendingPixels = useRef<Point[]>([]);
+  const pendingPixels = useRef<{ x: number; y: number; color: string }[]>([]);
   const pendingErasePixels = useRef<Point[]>([]);
 
   // Debounced batch send for drawing
-  const debouncedSendBatch = useCallback(() => {
+  const debouncedSendDraw = useCallback(() => {
     if (drawDebounceTimeout.current) {
       clearTimeout(drawDebounceTimeout.current);
     }
-
     drawDebounceTimeout.current = setTimeout(() => {
       if (pendingPixels.current.length > 0) {
         const pixels = pendingPixels.current.map((point) => ({
@@ -80,68 +75,60 @@ export const useCanvasEvents = ({
           y: point.y,
           color: color,
         }));
-
-        drawBatchPixels(pixels, true);
+        drawPixels(pixels, true);
         pendingPixels.current = [];
       }
-    }, 100); // 100ms debounce
-  }, [color, drawBatchPixels]);
+    }, 100);
+  }, [color, drawPixels]);
 
   // Debounced batch send for erasing
-  const debouncedSendEraseBatch = useCallback(() => {
+  const debouncedSendErase = useCallback(() => {
     if (eraseDebounceTimeout.current) {
       clearTimeout(eraseDebounceTimeout.current);
     }
-
     eraseDebounceTimeout.current = setTimeout(() => {
       if (pendingErasePixels.current.length > 0) {
         const pixels = pendingErasePixels.current.map((point) => ({
           x: point.x,
           y: point.y,
         }));
-
-        eraseBatchPixels(pixels, true);
+        erasePixels(pixels, true);
         pendingErasePixels.current = [];
       }
-    }, 100); // 100ms debounce
-  }, [eraseBatchPixels]);
+    }, 100);
+  }, [erasePixels]);
 
   // Throttled draw function
   const throttledDraw = useCallback(
     (x: number, y: number, shouldEmit: boolean = false) => {
       const now = Date.now();
-
       if (shouldEmit || now - lastDrawTime.current >= throttleDelay) {
         if (currentTool === "eraser") {
-          erasePixel(x, y, shouldEmit);
+          erasePixels([{ x, y }], shouldEmit);
           if (!shouldEmit) {
-            // Mouse hareketi sırasında pending erase'e ekle
             pendingErasePixels.current.push({ x, y });
-            debouncedSendEraseBatch();
+            debouncedSendErase();
           }
         } else {
-          drawPixel(x, y, color, shouldEmit);
+          drawPixels([{ x, y, color }], shouldEmit);
           if (!shouldEmit) {
-            // Mouse hareketi sırasında pending'e ekle
-            pendingPixels.current.push({ x, y });
-            debouncedSendBatch();
+            pendingPixels.current.push({ x, y, color });
+            debouncedSendDraw();
           }
         }
-
         if (shouldEmit) {
           drawPath.current.push({ x, y });
         }
-
         lastDrawTime.current = now;
       }
     },
     [
       currentTool,
       color,
-      drawPixel,
-      erasePixel,
-      debouncedSendBatch,
-      debouncedSendEraseBatch,
+      drawPixels,
+      erasePixels,
+      debouncedSendDraw,
+      debouncedSendErase,
     ]
   );
 
@@ -197,9 +184,9 @@ export const useCanvasEvents = ({
       if (isWithinCanvas(x, y, pixelSize)) {
         // İlk tıklamada hemen çiz ve socket mesajı gönder
         if (currentTool === "eraser") {
-          erasePixel(x, y, true);
+          erasePixels([{ x, y }], true);
         } else {
-          drawPixel(x, y, color, true);
+          drawPixels([{ x, y, color }], true);
         }
         drawPath.current.push({ x, y });
       }
@@ -266,9 +253,9 @@ export const useCanvasEvents = ({
     if (isDrawing.current && currentTool !== "hand") {
       // Çizim bittiğinde batch mesajları gönder
       if (currentTool === "eraser") {
-        debouncedSendEraseBatch();
+        debouncedSendErase();
       } else {
-        debouncedSendBatch();
+        debouncedSendDraw();
       }
     }
 
@@ -280,9 +267,9 @@ export const useCanvasEvents = ({
     if (isDrawing.current && currentTool !== "hand") {
       // Mouse canvas'tan çıktığında da batch mesajları gönder
       if (currentTool === "eraser") {
-        debouncedSendEraseBatch();
+        debouncedSendErase();
       } else {
-        debouncedSendBatch();
+        debouncedSendDraw();
       }
     }
 
