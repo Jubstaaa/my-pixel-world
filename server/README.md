@@ -6,11 +6,12 @@ Real-time collaborative pixel art server built with Node.js, TypeScript, Socket.
 
 - Real-time drawing synchronization
 - Canvas history management with MongoDB persistence
+- Room-based collaboration system
 - TypeScript support
 - Environment configuration
 - Health check endpoints
 - No data loss on server restart
-- Efficient single-document canvas storage
+- Efficient single-document canvas storage per room
 
 ## Development
 
@@ -80,9 +81,12 @@ npm start
 
 - `draw`: Send drawing data
 - `clear-canvas`: Clear canvas
+- `join-room`: Join a specific room
 
 ### Server to Client
 
 - `drawing-history`: Send canvas history
 - `draw`: Broadcast drawing data
 - `clear-canvas`: Broadcast canvas clear
+- `user-count`: Send user count for room
+- `join-room`: Confirm room join

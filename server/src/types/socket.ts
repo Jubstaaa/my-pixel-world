@@ -12,16 +12,25 @@ export interface Pixel {
   color: string;
 }
 
+export interface PopularRoom {
+  slug: string;
+  pixelCount: number;
+  updatedAt: string;
+}
+
 export interface ServerToClientEvents {
   "drawing-history": (history: DrawingData[]) => void;
   draw: (data: DrawingData) => void;
   "clear-canvas": () => void;
   "user-count": (count: number) => void;
+  "join-room": (roomSlug: string) => void;
+  "popular-rooms": (rooms: PopularRoom[]) => void;
 }
 
 export interface ClientToServerEvents {
   draw: (data: DrawingData) => void;
   "clear-canvas": () => void;
+  "join-room": (roomSlug: string) => void;
 }
 
 export interface InterServerEvents {

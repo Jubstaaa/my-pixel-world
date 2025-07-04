@@ -1,9 +1,5 @@
-import DrawingCanvas from "@/components/DrawingCanvas";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return (
-    <main className="w-screen h-screen">
-      <DrawingCanvas />
-    </main>
-  );
+  redirect("/main");
 }

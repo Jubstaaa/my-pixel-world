@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { config } from "../config/env";
 
-export const useSocket = () => {
+export const useSocket = (roomSlug: string = "main") => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
@@ -17,13 +17,12 @@ export const useSocket = () => {
       });
 
       socketRef.current.on("connect", () => {
-        console.log("Connected to server");
         setIsConnected(true);
         setIsConnecting(false);
+        socketRef.current?.emit("join-room", roomSlug);
       });
 
       socketRef.current.on("disconnect", () => {
-        console.log("Disconnected from server");
         setIsConnected(false);
         setIsConnecting(false);
       });
@@ -34,7 +33,6 @@ export const useSocket = () => {
         setIsConnecting(false);
       });
 
-      // Timeout for connection
       const timeout = setTimeout(() => {
         if (!socketRef.current?.connected) {
           setIsConnecting(false);
@@ -50,6 +48,12 @@ export const useSocket = () => {
       };
     }
   }, []);
+
+  useEffect(() => {
+    if (socketRef.current && isConnected) {
+      socketRef.current.emit("join-room", roomSlug);
+    }
+  }, [roomSlug, isConnected]);
 
   useEffect(() => {
     if (!socketRef.current) return;

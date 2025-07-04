@@ -53,17 +53,15 @@ export const useCanvasEvents = ({
   const drawGridRef = useRef(drawGrid);
   drawGridRef.current = drawGrid;
 
-  // Optimizasyon için refs
   const isDrawing = useRef(false);
   const lastDrawTime = useRef(0);
   const drawPath = useRef<Point[]>([]);
-  const throttleDelay = 16; // ~60fps
+  const throttleDelay = 16;
   const drawDebounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const eraseDebounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const pendingPixels = useRef<{ x: number; y: number; color: string }[]>([]);
   const pendingErasePixels = useRef<Point[]>([]);
 
-  // Debounced batch send for drawing
   const debouncedSendDraw = useCallback(() => {
     if (drawDebounceTimeout.current) {
       clearTimeout(drawDebounceTimeout.current);
@@ -81,7 +79,6 @@ export const useCanvasEvents = ({
     }, 100);
   }, [color, drawPixels]);
 
-  // Debounced batch send for erasing
   const debouncedSendErase = useCallback(() => {
     if (eraseDebounceTimeout.current) {
       clearTimeout(eraseDebounceTimeout.current);
@@ -98,7 +95,6 @@ export const useCanvasEvents = ({
     }, 100);
   }, [erasePixels]);
 
-  // Throttled draw function
   const throttledDraw = useCallback(
     (x: number, y: number, shouldEmit: boolean = false) => {
       const now = Date.now();
@@ -161,7 +157,6 @@ export const useCanvasEvents = ({
       }
     }
 
-    // Cleanup function
     return () => {
       if (drawDebounceTimeout.current) {
         clearTimeout(drawDebounceTimeout.current);
@@ -182,7 +177,6 @@ export const useCanvasEvents = ({
 
       const { x, y } = getGridPosition(e, panOffset, pixelSize);
       if (isWithinCanvas(x, y, pixelSize)) {
-        // İlk tıklamada hemen çiz ve socket mesajı gönder
         if (currentTool === "eraser") {
           erasePixels([{ x, y }], true);
         } else {
@@ -210,7 +204,6 @@ export const useCanvasEvents = ({
     } else if (e.buttons === 1 && currentTool !== "hand" && isDrawing.current) {
       const { x, y } = getGridPosition(e, panOffset, pixelSize);
       if (isWithinCanvas(x, y, pixelSize)) {
-        // Mouse hareketi sırasında throttled çizim (socket mesajı gönderme)
         throttledDraw(x, y, false);
       }
     }
@@ -251,7 +244,6 @@ export const useCanvasEvents = ({
 
   const handleMouseUp = () => {
     if (isDrawing.current && currentTool !== "hand") {
-      // Çizim bittiğinde batch mesajları gönder
       if (currentTool === "eraser") {
         debouncedSendErase();
       } else {
@@ -265,7 +257,6 @@ export const useCanvasEvents = ({
 
   const handleMouseLeave = () => {
     if (isDrawing.current && currentTool !== "hand") {
-      // Mouse canvas'tan çıktığında da batch mesajları gönder
       if (currentTool === "eraser") {
         debouncedSendErase();
       } else {

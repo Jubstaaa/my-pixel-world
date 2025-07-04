@@ -4,11 +4,18 @@ import { useCanvas } from "@/hooks/useCanvas";
 import { useCanvasEvents } from "@/hooks/useCanvasEvents";
 import { Toolbar } from "@/components/Toolbar";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import RoomNavigation from "@/components/RoomNavigation";
 import { getToolCursor } from "@/utils/canvas";
 import { useSocket } from "@/hooks/useSocket";
 
-export default function DrawingCanvas() {
-  const { socket, userCount, isConnected, isConnecting } = useSocket();
+interface DrawingCanvasProps {
+  roomSlug?: string;
+}
+
+export default function DrawingCanvas({
+  roomSlug = "main",
+}: DrawingCanvasProps) {
+  const { socket, userCount, isConnected, isConnecting } = useSocket(roomSlug);
   const {
     canvasRef,
     hoverCanvasRef,
@@ -28,7 +35,7 @@ export default function DrawingCanvas() {
     drawGrid,
     drawPixels,
     erasePixels,
-  } = useCanvas(socket);
+  } = useCanvas(socket, roomSlug);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } =
     useCanvasEvents({
@@ -53,6 +60,11 @@ export default function DrawingCanvas() {
   return (
     <>
       <LoadingScreen isConnected={isConnected} isConnecting={isConnecting} />
+      <RoomNavigation
+        currentRoom={roomSlug}
+        userCount={userCount}
+        socket={socket}
+      />
 
       <div className="relative w-screen h-screen overflow-hidden">
         <div
@@ -85,15 +97,8 @@ export default function DrawingCanvas() {
           setColor={setColor}
           currentTool={currentTool}
           setCurrentTool={setCurrentTool}
-          isConnected={isConnected}
         />
       </div>
-
-      {isConnected && (
-        <div className="fixed top-2 right-4 z-50 bg-white/80 px-3 py-1 rounded shadow text-sm font-medium">
-          {userCount} online
-        </div>
-      )}
     </>
   );
 }

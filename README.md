@@ -1,13 +1,13 @@
 # My Pixel World
 
-Real-time collaborative pixel art editor built with Next.js, Socket.IO, TypeScript, and Redis.
+Real-time collaborative pixel art editor built with Next.js, Socket.IO, TypeScript, and MongoDB.
 
 ## Project Structure
 
 This project is split into two parts:
 
 - **`client/`**: Next.js frontend application (deployed on Vercel)
-- **`server/`**: Node.js + Socket.IO backend with Redis (deployed on Render.com)
+- **`server/`**: Node.js + Socket.IO backend with MongoDB (deployed on Render.com)
 
 ## Features
 
@@ -16,9 +16,10 @@ This project is split into two parts:
 - 🎨 Color picker with custom colors
 - 🗺️ Large navigable canvas
 - 👥 Multi-user collaboration
+- 🏠 Room-based collaboration system
 - 📱 Responsive design with loading screen
 - ⚡ TypeScript support
-- 🗄️ Redis persistence (no data loss on server restart)
+- 🗄️ MongoDB persistence (no data loss on server restart)
 - 🚀 Optimized for production
 
 ## Quick Start
@@ -58,9 +59,9 @@ npm run dev
    - `NODE_ENV=production`
    - `CLIENT_URL=https://your-vercel-app.vercel.app`
    - `CORS_ORIGIN=https://your-vercel-app.vercel.app`
-   - `REDIS_URL=your-redis-url-from-render`
+   - `MONGODB_URI=your-mongodb-uri`
 
-6. Create a Redis instance on Render.com and connect it to your server
+6. Create a MongoDB instance on Render.com or use MongoDB Atlas and connect it to your server
 
 #### Client (Vercel)
 
@@ -87,7 +88,8 @@ npm run dev
 - TypeScript
 - Socket.IO
 - Express.js
-- Redis
+- MongoDB
+- Mongoose
 - CORS
 
 ## Environment Variables
@@ -99,7 +101,7 @@ PORT=3001
 NODE_ENV=development
 CORS_ORIGIN=*
 CLIENT_URL=http://localhost:3000
-REDIS_URL=redis://localhost:6379
+MONGODB_URI=mongodb://localhost:27017/pixel-world
 ```
 
 ### Client (.env.local)
