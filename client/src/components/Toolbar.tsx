@@ -1,13 +1,12 @@
 import { Tool } from "@/types/canvas";
 import { getToolIcon, getToolTitle } from "@/utils/canvas";
-import { MdiIcon } from "@/components/MdiIcon";
+import Icon from "@mdi/react";
 
 interface ToolbarProps {
   color: string;
   setColor: (color: string) => void;
   currentTool: Tool;
   setCurrentTool: (tool: Tool) => void;
-  isConnected: boolean;
 }
 
 export const Toolbar = ({
@@ -15,7 +14,6 @@ export const Toolbar = ({
   setColor,
   currentTool,
   setCurrentTool,
-  isConnected,
 }: ToolbarProps) => {
   const tools: Tool[] = ["pen", "eraser", "hand"];
 
@@ -49,18 +47,9 @@ export const Toolbar = ({
           }`}
           title={getToolTitle(tool)}
         >
-          <MdiIcon path={getToolIcon(tool)} size={26} />
+          <Icon path={getToolIcon(tool)} size={1} />
         </button>
       ))}
-
-      <div className="w-full h-[1px] bg-gray-300"></div>
-
-      <div
-        className={`w-3 h-3 rounded-full border-2 border-white shadow-md ${
-          isConnected ? "bg-green-500" : "bg-red-500"
-        }`}
-        title={isConnected ? "Connected" : "Disconnected"}
-      ></div>
     </div>
   );
 };

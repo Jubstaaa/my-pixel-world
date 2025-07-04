@@ -1,7 +1,7 @@
 {
   "name": "pixel-art-server",
   "version": "1.0.0",
-  "description": "Real-time collaborative pixel art server",
+  "description": "Real-time collaborative pixel art server with MongoDB",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
@@ -28,7 +28,8 @@
     "pixel-art",
     "socket.io",
     "real-time",
-    "collaborative"
+    "collaborative",
+    "mongodb"
   ],
   "author": "",
   "license": "MIT"

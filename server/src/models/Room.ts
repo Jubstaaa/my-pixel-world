@@ -6,13 +6,22 @@ export interface IPixel {
   color: string;
 }
 
-export interface ICanvas extends Document {
+export interface IRoom extends Document {
+  slug: string;
   pixels: IPixel[];
-  lastUpdated: Date;
+  updatedAt: Date;
+  createdAt: Date;
 }
 
-const CanvasSchema: Schema = new Schema(
+const RoomSchema: Schema = new Schema(
   {
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
     pixels: [
       {
         x: { type: Number, required: true },
@@ -20,16 +29,10 @@ const CanvasSchema: Schema = new Schema(
         color: { type: String, required: true },
       },
     ],
-    lastUpdated: {
-      type: Date,
-      default: Date.now,
-    },
   },
   {
     timestamps: true,
   }
 );
 
-CanvasSchema.index({ _id: 1 });
-
-export const Canvas = mongoose.model<ICanvas>("Canvas", CanvasSchema);
+export const Room = mongoose.model<IRoom>("Room", RoomSchema);

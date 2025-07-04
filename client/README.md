@@ -8,6 +8,8 @@ Real-time collaborative pixel art editor built with Next.js, TypeScript, and Soc
 - Multiple drawing tools (pen, eraser, hand)
 - Color picker
 - Large navigable canvas
+- Room-based collaboration system
+- Dynamic room navigation
 - Material Design Icons
 - TypeScript support
 - Loading screen with connection status
@@ -66,6 +68,14 @@ src/
 - **Hand Tool**: Navigate around the canvas
 - **Color Picker**: Select drawing colors
 - **Clear Canvas**: Clear all pixels
+
+## Room System
+
+- **Dynamic Rooms**: Create and join rooms with custom names
+- **Room Navigation**: Quick access to popular rooms
+- **User Count**: See how many users are in each room
+- **URL-based**: Each room has its own URL (e.g., `/art`, `/pixel`)
+- **Slug Normalization**: Room names are automatically converted to URL-friendly slugs
 
 ## Technologies
 

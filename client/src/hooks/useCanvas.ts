@@ -10,7 +10,7 @@ import {
   DEFAULT_TOOL,
 } from "@/constants/canvas";
 
-export const useCanvas = (socket: Socket | null) => {
+export const useCanvas = (socket: Socket | null, roomKey: string = "main") => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hoverCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -24,6 +24,25 @@ export const useCanvas = (socket: Socket | null) => {
   const [isPanning, setIsPanning] = useState(false);
   const [panOffset, setPanOffset] = useState<PanOffset>({ x: 0, y: 0 });
   const [lastPanPoint, setLastPanPoint] = useState<Point>({ x: 0, y: 0 });
+
+  useEffect(() => {
+    setColor(DEFAULT_COLOR);
+    setCurrentTool(DEFAULT_TOOL);
+    setIsPanning(false);
+    setPanOffset({
+      x: (window.innerWidth - CANVAS_WIDTH) / 2,
+      y: (window.innerHeight - CANVAS_HEIGHT) / 2,
+    });
+    setLastPanPoint({ x: 0, y: 0 });
+    isInitialized.current = false;
+
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+    }
+  }, [roomKey]);
 
   type DrawPixel = { x: number; y: number; color: string };
   type ErasePixel = { x: number; y: number };
@@ -139,7 +158,6 @@ export const useCanvas = (socket: Socket | null) => {
   };
 
   const handleDrawingHistory = (history: DrawingData[]) => {
-    console.log("Loading drawing history:", history.length, "pixels");
     history.forEach((data) => {
       if (data.path && data.color) {
         const pixelData: DrawPixel = {
@@ -152,22 +170,11 @@ export const useCanvas = (socket: Socket | null) => {
   };
 
   useEffect(() => {
-    setPanOffset({
-      x: (window.innerWidth - CANVAS_WIDTH) / 2,
-      y: (window.innerHeight - CANVAS_HEIGHT) / 2,
-    });
-  }, []);
-
-  useEffect(() => {
     if (!socket) return;
 
-    const handleConnect = () => {
-      console.log("Connected to server");
-    };
+    const handleConnect = () => {};
 
-    const handleDisconnect = () => {
-      console.log("Disconnected from server");
-    };
+    const handleDisconnect = () => {};
 
     const handleClearCanvas = () => {
       drawGrid();
