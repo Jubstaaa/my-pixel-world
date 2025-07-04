@@ -1,15 +1,17 @@
 import DrawingCanvas from "@/components/DrawingCanvas";
 
 interface RoomPageProps {
-  params: {
+  params: Promise<{
     room: string;
-  };
+  }>;
 }
 
-export default function RoomPage({ params }: RoomPageProps) {
+export default async function RoomPage({ params }: RoomPageProps) {
+  const { room } = await params;
+
   return (
     <main className="w-screen h-screen">
-      <DrawingCanvas roomSlug={params.room} />
+      <DrawingCanvas roomSlug={room} />
     </main>
   );
 }
