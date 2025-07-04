@@ -2,9 +2,10 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
-import { createClient } from "redis";
+import mongoose from "mongoose";
 import { config } from "./config/env";
 import { IOServer, HTTPServerType, DrawingData } from "./types/socket";
+import { Canvas, IPixel } from "./models/Canvas";
 
 const app = express();
 const server: HTTPServerType = createServer(app);
@@ -20,38 +21,63 @@ const io: IOServer = new Server(server, {
   },
 });
 
-const redis = createClient({ url: config.redisUrl });
-redis.on("error", (err: Error) => {
-  console.error("Redis Client Error:", err);
-});
-redis.on("connect", () => {
-  console.log("Connected to Redis");
-});
-
-const PIXEL_HISTORY_KEY = "pixel_history";
+mongoose
+  .connect(config.mongodbUri)
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((err: Error) => {
+    console.error("MongoDB connection error:", err);
+  });
 
 const loadPixelHistory = async (): Promise<DrawingData[]> => {
   try {
-    const history = await redis.get(PIXEL_HISTORY_KEY);
-    return history ? JSON.parse(history) : [];
-  } catch {
+    let canvas = await Canvas.findOne();
+
+    if (!canvas) {
+      canvas = await Canvas.create({ pixels: [] });
+    }
+
+    return canvas.pixels.map((pixel: IPixel) => ({
+      path: JSON.stringify({ x: pixel.x, y: pixel.y }),
+      color: pixel.color,
+    }));
+  } catch (error) {
+    console.error("Error loading pixel history:", error);
     return [];
   }
 };
 
-const savePixelHistory = async (history: DrawingData[]) => {
+const saveAllPixels = async (pixelHistory: DrawingData[]): Promise<void> => {
   try {
-    await redis.set(PIXEL_HISTORY_KEY, JSON.stringify(history));
-  } catch {}
+    const pixelsToSave = pixelHistory.map((pixelData) => {
+      const { x, y } = JSON.parse(pixelData.path);
+      return { x, y, color: pixelData.color };
+    });
+
+    await Canvas.findOneAndUpdate(
+      {},
+      {
+        pixels: pixelsToSave,
+        lastUpdated: new Date(),
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+  } catch (error) {
+    console.error("Error saving canvas:", error);
+  }
 };
 
 let pixelHistory: DrawingData[] = [];
 
 const initializeServer = async () => {
-  await redis.connect();
   pixelHistory = await loadPixelHistory();
+
   setInterval(() => {
-    savePixelHistory(pixelHistory);
+    saveAllPixels(pixelHistory);
   }, 15000);
 
   io.on("connection", async (socket) => {
@@ -60,8 +86,9 @@ const initializeServer = async () => {
       const pixels: { x: number; y: number; color?: string }[] = JSON.parse(
         data.path
       );
+
       if (!data.color) {
-        pixels.forEach((erasePixel) => {
+        for (const erasePixel of pixels) {
           pixelHistory = pixelHistory.filter((pixelData) => {
             if (pixelData.path) {
               const pixel = JSON.parse(pixelData.path);
@@ -69,21 +96,24 @@ const initializeServer = async () => {
             }
             return true;
           });
-        });
+        }
       } else {
-        pixels.forEach((pixel) => {
-          if (!pixel.color && !data.color) return;
+        for (const pixel of pixels) {
+          if (!pixel.color && !data.color) continue;
+
           pixelHistory = pixelHistory.filter((p) => {
             const { x, y } = JSON.parse(p.path);
             return !(x === pixel.x && y === pixel.y);
           });
-          pixelHistory.push({
+
+          const newPixel = {
             path: JSON.stringify({ x: pixel.x, y: pixel.y }),
             color: pixel.color || data.color,
-          });
-        });
+          };
+          pixelHistory.push(newPixel);
+        }
       }
-      console.log(pixelHistory.slice(-20));
+
       socket.broadcast.emit("draw", data);
     });
 
