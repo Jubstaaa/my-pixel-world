@@ -139,7 +139,7 @@ export default function RoomNavigation({
 
   return (
     <>
-      <div className="fixed top-2 right-2 z-50">
+      <div className="fixed top-2 right-2">
         <div className="flex items-start gap-2 relative">
           <button
             onClick={() => setIsOpen(!isOpen)}
