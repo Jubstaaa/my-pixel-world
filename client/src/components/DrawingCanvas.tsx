@@ -60,11 +60,6 @@ export default function DrawingCanvas({
   return (
     <>
       <LoadingScreen isConnected={isConnected} isConnecting={isConnecting} />
-      <RoomNavigation
-        currentRoom={roomSlug}
-        userCount={userCount}
-        socket={socket}
-      />
 
       <div className="relative w-screen h-screen overflow-hidden">
         <div
@@ -98,6 +93,11 @@ export default function DrawingCanvas({
           currentTool={currentTool}
           setCurrentTool={setCurrentTool}
         />
+         <RoomNavigation
+        currentRoom={roomSlug}
+        userCount={userCount}
+        socket={socket}
+      />
       </div>
     </>
   );
